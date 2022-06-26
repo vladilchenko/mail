@@ -16,6 +16,7 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#opened-email-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
@@ -29,6 +30,7 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#opened-email-view').style.display = 'none';
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
@@ -51,7 +53,8 @@ function create_email_block(email) {
   email_block = document.createElement("div");
   email_block.setAttribute("email_uuid", email.id)
   email_block.addEventListener("click", event => {
-    console.log(`Clicked on email ${event.currentTarget.getAttribute("email_uuid")}`)
+    console.log(`Clicked on email ${event.currentTarget.getAttribute("email_uuid")}`);
+    showOpenedEmail(event.currentTarget.getAttribute("email_uuid"));
   });
   email_block.classList.add("email_record");
   if (email.read) {
@@ -76,7 +79,6 @@ function create_email_block(email) {
 
 function send_email() {
 
-
   fetch('/emails', {
     method: 'POST',
     body: JSON.stringify({
@@ -87,10 +89,41 @@ function send_email() {
   })
   .then(response => response.json())
   .then(result => {
-    console.log(result)
+    console.log(result);
   });
 
   load_mailbox('sent');
 
   return false;
+}
+
+function showOpenedEmail(email_id) {
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+    console.log(email);
+
+    subject = document.createElement("h3");
+    subject.innerHTML = email.subject;
+
+    from = document.createElement("h5");
+    from.innerHTML = `From: ${email.sender}`;
+
+    to = document.createElement("h5");
+    to.innerHTML = `To: ${email.recipients.join(", ")}`;
+
+    when = document.createElement("p");
+    when.innerHTML = email.timestamp;
+
+    body = document.createElement("p");
+    body.innerHTML = email.body;
+
+    container = document.querySelector("#opened-email-view");
+    container.replaceChildren(subject, from, to, when, body);
+
+    // Update view
+    document.querySelector('#emails-view').style.display = 'none';
+    document.querySelector('#compose-view').style.display = 'none';
+    document.querySelector('#opened-email-view').style.display = 'block';
+  });
 }
