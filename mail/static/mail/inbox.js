@@ -25,6 +25,26 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
+function reply_email(email) {
+
+  // Show compose view and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#opened-email-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+
+  if (email.subject.substring(0, 3) === "Re:") {
+    subject = email.subject;
+  } else {
+    subject = `Re: ${email.subject}`;
+  };
+
+  // Clear out composition fields
+  document.querySelector('#compose-recipients').value = email.sender;
+  document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+  document.querySelector('#compose-body').value = `On ${email.timestamp} ${email.sender} wrote:\n ${email.body} \n\n`;
+
+}
+
 function load_mailbox(mailbox) {
   
   // Show the mailbox and hide other views
@@ -144,9 +164,8 @@ function send_email() {
   .then(response => response.json())
   .then(result => {
     console.log(result);
+    load_mailbox('sent');
   });
-
-  load_mailbox('sent');
 
   return false;
 }
@@ -172,8 +191,14 @@ function showOpenedEmail(email_id) {
     body = document.createElement("p");
     body.innerHTML = email.body;
 
+    reply = document.createElement("button");
+    reply.innerHTML = "Reply";
+    reply.addEventListener("click", () => {
+      reply_email(email);
+    });
+
     container = document.querySelector("#opened-email-view");
-    container.replaceChildren(subject, from, to, when, body);
+    container.replaceChildren(subject, from, to, when, body, reply);
 
     // Update view
     document.querySelector('#emails-view').style.display = 'none';
