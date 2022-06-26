@@ -1,3 +1,12 @@
 textarea {
     min-height: 400px;
 }
+
+.email_record {
+    border: solid;
+    padding: 1%;
+}
+
+.read {
+    background-color: bisque;
+}
