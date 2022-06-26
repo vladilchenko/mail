@@ -40,8 +40,25 @@ function load_mailbox(mailbox) {
   .then(response => response.json())
   .then(data => {
     data.forEach(email => {
-      email_block = create_email_block(email);
-      document.querySelector("#emails-view").append(email_block);
+      if (mailbox === "inbox") {
+        email_block = create_email_block(email, true, false);
+        if (email.archived === false) {
+          document.querySelector("#emails-view").append(email_block);
+        };
+      };
+      if (mailbox === "sent") {
+        let current_user = document.querySelector("#current_user").textContent;
+        if (email.sender === current_user) {
+          email_block = create_email_block(email, false, false);
+          document.querySelector("#emails-view").append(email_block);
+        };
+      };
+      if (mailbox === "archive") {
+        if (email.archived === true) {
+          email_block = create_email_block(email, false, true);
+          document.querySelector("#emails-view").append(email_block);
+        }
+      };
     })
   })
   .catch(error => {
@@ -49,22 +66,17 @@ function load_mailbox(mailbox) {
   });
 }
 
-function create_email_block(email) {
+function create_email_block(email, archive, unarchive) {
   email_block = document.createElement("div");
-  email_block.setAttribute("email_uuid", email.id)
   email_block.addEventListener("click", event => {
-    let email_id = event.currentTarget.getAttribute("email_uuid");
-    console.log(`Clicked on email ${email_id}`);
-    fetch(`/emails/${email_id}`, {
+    console.log(`Clicked on email ${email.id}`);
+    fetch(`/emails/${email.id}`, {
       method: 'PUT',
       body: JSON.stringify({read: true})
     });
-    showOpenedEmail(email_id);
+    showOpenedEmail(email.id);
   });
   email_block.classList.add("email_record");
-  if (email.read) {
-    email_block.classList.add("read")
-  };
 
   email_subject = document.createElement("h4");
   email_subject.innerHTML = email.subject;
@@ -78,6 +90,43 @@ function create_email_block(email) {
   email_block.appendChild(email_subject);
   email_block.appendChild(email_sender);
   email_block.appendChild(email_date);
+
+  if (unarchive === true) {
+    unarchive = document.createElement("button");
+    unarchive.innerHTML = "Unarchive";
+    unarchive.addEventListener("click", event => {
+      fetch( `/emails/${email.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({archived: false, read: false})
+      })
+      .then(() => {
+        load_mailbox("archive");
+      });
+
+      event.stopPropagation();
+    });
+    email_block.appendChild(unarchive)
+  };
+  if (archive === true) {
+    // Mark as read
+    if (email.read) {
+      email_block.classList.add("read")
+    };
+
+    archive = document.createElement("button");
+    archive.innerHTML = "Archive";
+    archive.addEventListener("click", event => {
+      fetch( `/emails/${email.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({archived: true})
+      })
+      .then(result => console.log(result))
+      .then(() => load_mailbox("inbox"));
+
+      event.stopPropagation();
+    });
+    email_block.appendChild(archive)
+  };
 
   return email_block
 }
