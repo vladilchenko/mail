@@ -53,8 +53,13 @@ function create_email_block(email) {
   email_block = document.createElement("div");
   email_block.setAttribute("email_uuid", email.id)
   email_block.addEventListener("click", event => {
-    console.log(`Clicked on email ${event.currentTarget.getAttribute("email_uuid")}`);
-    showOpenedEmail(event.currentTarget.getAttribute("email_uuid"));
+    let email_id = event.currentTarget.getAttribute("email_uuid");
+    console.log(`Clicked on email ${email_id}`);
+    fetch(`/emails/${email_id}`, {
+      method: 'PUT',
+      body: JSON.stringify({read: true})
+    });
+    showOpenedEmail(email_id);
   });
   email_block.classList.add("email_record");
   if (email.read) {
